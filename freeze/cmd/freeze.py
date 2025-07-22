@@ -6,8 +6,13 @@ import spack.cmd
 import spack.environment as ev
 import spack.cmd.common.arguments as arguments
 import spack.util.spack_yaml as syaml
-import llnl.util.tty.color
-import llnl.util.tty as tty
+from spack import spack_version
+try:
+    import spack.llnl.util.tty.color as color
+    import spack.llnl.util.tty as tty
+except:
+    import llnl.util.tty.color as color
+    import llnl.util.tty as tty
 
 
 description = "Build packages.yaml fragment to freeze a package in an environment"
@@ -25,7 +30,7 @@ def freeze(parser, args):
     # print("parser is " + repr(parser) + "args: " + repr(args))
 
     # dont get color strings in the specs...
-    llnl.util.tty.color.set_color_when(False)
+    color.set_color_when(False)
 
     # try to expand specs with -E and then turn it back off...
     args.no_env = True
@@ -91,11 +96,20 @@ def freeze2(parser, args, outf, spec):
     did_already = set()
 
     if args.type == "require":
-       spec_format = "{name}:\n    require:\n    - '{@version}'\n    - '{variants}'\n    - '{%compiler.name}{@compiler.version}'\n    - '/{hash}'"
+       if spack_version > "1.0":
+           spec_format = "{name}:\n    require:\n    - '{@version}'\n    - '{variants}'\n    - '/{hash}'"
+       else:
+           spec_format = "{name}:\n    require:\n    - '{@version}'\n    - '{variants}'\n    - '{%compiler.name}{@compiler.version}'\n    - '/{hash}'"
     elif args.type == "external":
-       spec_format = "{name}:\n    externals:\n    - spec: '{name} {@version} {variants} /{hash} {%compiler.name}{@compiler.version}'\n      prefix: {prefix}\n    buildable: false"
+       if spack_version > "1.0":
+           spec_format = "{name}:\n    externals:\n    - spec: '{name} {@version} {variants} /{hash}'\n      prefix: {prefix}\n    buildable: false"
+       else:
+           spec_format = "{name}:\n    externals:\n    - spec: '{name} {@version} {variants} /{hash} {%compiler.name}{@compiler.version}'\n      prefix: {prefix}\n    buildable: false"
     elif args.type == "ext-no-var":
-       spec_format = "{name}:\n    externals:\n    - spec: '{name} {@version} {%compiler.name}{@compiler.version}'\n      prefix: {prefix}\n    buildable: false"
+       if spack_version > "1.0":
+           spec_format = "{name}:\n    externals:\n    - spec: '{name} {@version}'\n      prefix: {prefix}\n    buildable: false"
+       else:
+           spec_format = "{name}:\n    externals:\n    - spec: '{name} {@version} {%compiler.name}{@compiler.version}'\n      prefix: {prefix}\n    buildable: false"
     else:
         tty.error("Invalid --type value") 
         exit(1)
